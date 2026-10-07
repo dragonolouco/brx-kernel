@@ -4,7 +4,7 @@ LIMINE := third_party/limine-binary
 SHELL := /bin/bash
 CC := gcc
 LD := ld
-CFLAGS := -std=c11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-pie -fno-asynchronous-unwind-tables -mno-red-zone -mcmodel=kernel -m64 -Iinclude
+CFLAGS := -std=c11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-pie -fno-asynchronous-unwind-tables -mno-red-zone -mno-sse -mno-sse2 -mno-mmx -mcmodel=kernel -m64 -Iinclude
 LDFLAGS := -nostdlib -z max-page-size=0x1000 -T linker/brx.ld
 
 .PHONY: all clean iso run check
@@ -13,11 +13,29 @@ all: $(BUILD)/brx.elf
 $(BUILD):
 	mkdir -p $(BUILD)/iso/boot
 
-$(BUILD)/kernel.o: src/kernel.c include/brx_boot.h | $(BUILD)
+$(BUILD)/kernel.o: src/kernel.c include/brx_boot.h include/brx_memory.h include/brx_interrupts.h include/brx_module.h | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD)/brx.elf: $(BUILD)/kernel.o linker/brx.ld
-	$(LD) $(LDFLAGS) -o $@ $(BUILD)/kernel.o
+$(BUILD)/memory.o: src/memory.c include/brx_memory.h include/brx_boot.h | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/interrupts.o: src/interrupts.c include/brx_interrupts.h include/brx_ps2.h | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/interrupts-asm.o: src/interrupts.S | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/module.o: src/module.c include/brx_module.h | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/pci.o: src/pci.c include/brx_pci.h | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/ps2.o: src/ps2.c include/brx_ps2.h | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/brx.elf: $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o linker/brx.ld
+	$(LD) $(LDFLAGS) -o $@ $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o
 	readelf -h $@ | grep -q 'Type:[[:space:]]*EXEC'
 
 $(BUILD)/iso/boot/brx.elf: $(BUILD)/brx.elf | $(BUILD)
