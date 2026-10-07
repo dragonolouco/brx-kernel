@@ -8,6 +8,7 @@
 #include "brx_cpu.h"
 #include "brx_exec.h"
 #include "brx_process.h"
+#include "brx_ui.h"
 
 #define COM1 0x3F8
 
@@ -83,6 +84,11 @@ static volatile brx_memmap_request_t brx_memory_request = {
     { BRX_MEMMAP_ID_A, BRX_MEMMAP_ID_B, BRX_MEMMAP_ID_C, BRX_MEMMAP_ID_D }, 0, 0
 };
 
+__attribute__((used, section(".limine_requests"), aligned(8)))
+static volatile brx_framebuffer_request_t brx_framebuffer_request = {
+    { BRX_FRAMEBUFFER_REQUEST_A, BRX_FRAMEBUFFER_REQUEST_B, BRX_FRAMEBUFFER_REQUEST_C, BRX_FRAMEBUFFER_REQUEST_D }, 0, 0
+};
+
 __attribute__((used, section(".limine_requests_end"), aligned(8)))
 static volatile uint64_t brx_requests_end[] = { BRX_REQUESTS_END_A, BRX_REQUESTS_END_B };
 
@@ -90,6 +96,26 @@ void kmain(void) {
     serial_init();
     serial_write("BRX Kernel\n");
     serial_write("status: native x86_64 kernel online\n");
+
+    brx_ui_surface_t surface = {0};
+    if (brx_framebuffer_request.response && brx_framebuffer_request.response->framebuffer_count > 0 && brx_framebuffer_request.response->framebuffers) {
+        brx_framebuffer_t *framebuffer = brx_framebuffer_request.response->framebuffers[0];
+        if (brx_ui_init(&surface, framebuffer)) {
+            brx_ui_clear(&surface, 0x101522);
+            brx_ui_rect(&surface, 0, 0, surface.width, 64, 0x18243a);
+            brx_ui_rect(&surface, 36, 104, surface.width > 72 ? surface.width - 72 : 0, 2, 0x2f81f7);
+            brx_ui_text(&surface, 40, 20, "BRX KERNEL", 0xf2f6ff, 4);
+            brx_ui_text(&surface, 56, 136, "GRAPHICAL INTERFACE", 0xb9c8df, 2);
+            brx_ui_rect(&surface, 56, 178, 300, 150, 0x18243a);
+            brx_ui_rect(&surface, 380, 178, 300, 150, 0x18243a);
+            brx_ui_text(&surface, 80, 204, "SYSTEM", 0x68d391, 2);
+            brx_ui_text(&surface, 80, 244, "NATIVE CORE", 0xf2f6ff, 2);
+            brx_ui_text(&surface, 404, 204, "STATUS", 0x68d391, 2);
+            brx_ui_text(&surface, 404, 244, "READY", 0xf2f6ff, 2);
+            brx_ui_cursor(&surface, surface.width / 2, surface.height / 2, 0xffffff);
+            serial_write("graphics: BRX framebuffer interface initialized\n");
+        } else serial_write("graphics: framebuffer format unsupported\n");
+    } else serial_write("graphics: no framebuffer supplied by bootloader\n");
 
     brx_memmap_response_t *map = brx_memory_request.response;
     if (!map) {
@@ -146,6 +172,7 @@ void kmain(void) {
     brx_module_register(&modules, (brx_module_t){ "core.memory", "current", "physical page allocator", 1, 1, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.virtual-memory", "current", "virtual address region manager", 1, 128, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.processes", "current", "process table and user stack model", 1, 256, BRX_MODULE_READY });
+    brx_module_register(&modules, (brx_module_t){ "core.graphical-interface", "current", "framebuffer compositor and BRX desktop surface", 1, 1024, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.interrupts", "current", "IDT PIC PIT", 1, 2, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.application-loader", "current", "automatic format detection and internal dispatch", 1, 32, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "compat.posix", "planned", "POSIX service layer", 1, 4, BRX_MODULE_PLANNED });

@@ -29,6 +29,42 @@
 #define BRX_MEM_BOOTLOADER 5
 #define BRX_MEM_KERNEL 6
 #define BRX_MEM_FRAMEBUFFER 7
+#define BRX_FRAMEBUFFER_REQUEST_A BRX_COMMON_MAGIC_A
+#define BRX_FRAMEBUFFER_REQUEST_B BRX_COMMON_MAGIC_B
+#define BRX_FRAMEBUFFER_REQUEST_C 0x9d5827dcd881dd75ULL
+#define BRX_FRAMEBUFFER_REQUEST_D 0xa3148604f6fab11bULL
+
+typedef struct {
+    void *address;
+    uint64_t width;
+    uint64_t height;
+    uint64_t pitch;
+    uint16_t bpp;
+    uint8_t memory_model;
+    uint8_t red_mask_size;
+    uint8_t red_mask_shift;
+    uint8_t green_mask_size;
+    uint8_t green_mask_shift;
+    uint8_t blue_mask_size;
+    uint8_t blue_mask_shift;
+    uint8_t unused[7];
+    uint64_t edid_size;
+    void *edid;
+    uint64_t mode_count;
+    void *modes;
+} brx_framebuffer_t;
+
+typedef struct {
+    uint64_t revision;
+    uint64_t framebuffer_count;
+    brx_framebuffer_t **framebuffers;
+} brx_framebuffer_response_t;
+
+typedef struct {
+    uint64_t id[4];
+    uint64_t revision;
+    brx_framebuffer_response_t *response;
+} brx_framebuffer_request_t;
 
 typedef struct {
     uint64_t base;
