@@ -1,0 +1,51 @@
+PROJECT := brx-kernel
+BUILD := build
+LIMINE := third_party/limine-binary
+SHELL := /bin/bash
+CC := gcc
+LD := ld
+CFLAGS := -std=c11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-pie -fno-asynchronous-unwind-tables -mno-red-zone -mcmodel=kernel -m64 -Iinclude
+LDFLAGS := -nostdlib -z max-page-size=0x1000 -T linker/brx.ld
+
+.PHONY: all clean iso run check
+all: $(BUILD)/brx.elf
+
+$(BUILD):
+	mkdir -p $(BUILD)/iso/boot
+
+$(BUILD)/kernel.o: src/kernel.c include/brx_boot.h | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/brx.elf: $(BUILD)/kernel.o linker/brx.ld
+	$(LD) $(LDFLAGS) -o $@ $(BUILD)/kernel.o
+	readelf -h $@ | grep -q 'Type:[[:space:]]*EXEC'
+
+$(BUILD)/iso/boot/brx.elf: $(BUILD)/brx.elf | $(BUILD)
+	cp $< $@
+
+$(BUILD)/iso/boot/limine/limine.conf: limine.conf | $(BUILD)
+	mkdir -p $(BUILD)/iso/boot/limine
+	cp $< $(BUILD)/iso/boot/limine/limine.conf
+
+$(LIMINE)/limine: $(LIMINE)/limine.c
+	$(CC) -g -O2 -pipe -std=c99 -D_FILE_OFFSET_BITS=64 $< -o $@
+
+iso: $(BUILD)/iso/boot/brx.elf $(BUILD)/iso/boot/limine/limine.conf $(LIMINE)/limine
+	cp $(LIMINE)/limine-bios.sys $(BUILD)/iso/boot/limine/
+	cp $(LIMINE)/limine-bios-cd.bin $(BUILD)/iso/boot/limine/
+	cp $(LIMINE)/limine-uefi-cd.bin $(BUILD)/iso/boot/limine/
+	mkdir -p $(BUILD)/iso/EFI/BOOT
+	cp $(LIMINE)/BOOTX64.EFI $(BUILD)/iso/EFI/BOOT/
+	xorriso -as mkisofs -R -r -J -b boot/limine/limine-bios-cd.bin -no-emul-boot -boot-load-size 4 -boot-info-table -hfsplus -apm-block-size 2048 --efi-boot boot/limine/limine-uefi-cd.bin -efi-boot-part --efi-boot-image --protective-msdos-label $(BUILD)/iso -o $(BUILD)/brx.iso
+	$(LIMINE)/limine bios-install $(BUILD)/brx.iso
+
+run: iso
+	timeout 8s qemu-system-x86_64 -M q35 -m 256M -cdrom $(BUILD)/brx.iso -serial stdio -display none -no-reboot -no-shutdown
+
+check: iso
+	rm -f $(BUILD)/qemu.log
+	timeout 8s qemu-system-x86_64 -M q35 -m 256M -cdrom $(BUILD)/brx.iso -boot d -serial file:$(BUILD)/qemu.log -display none -no-reboot -no-shutdown || test $$? -eq 124
+	grep -q 'BRX bootstrap complete' $(BUILD)/qemu.log
+
+clean:
+	rm -rf $(BUILD)
