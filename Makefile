@@ -13,7 +13,7 @@ all: $(BUILD)/brx.elf
 $(BUILD):
 	mkdir -p $(BUILD)/iso/boot
 
-$(BUILD)/kernel.o: src/kernel.c include/brx_boot.h include/brx_memory.h include/brx_interrupts.h include/brx_module.h | $(BUILD)
+$(BUILD)/kernel.o: src/kernel.c include/brx_boot.h include/brx_memory.h include/brx_interrupts.h include/brx_module.h include/brx_exec.h | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD)/memory.o: src/memory.c include/brx_memory.h include/brx_boot.h | $(BUILD)
@@ -34,8 +34,11 @@ $(BUILD)/pci.o: src/pci.c include/brx_pci.h | $(BUILD)
 $(BUILD)/ps2.o: src/ps2.c include/brx_ps2.h | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD)/brx.elf: $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o linker/brx.ld
-	$(LD) $(LDFLAGS) -o $@ $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o
+$(BUILD)/exec.o: src/exec.c include/brx_exec.h | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/brx.elf: $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o $(BUILD)/exec.o linker/brx.ld
+	$(LD) $(LDFLAGS) -o $@ $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o $(BUILD)/exec.o
 	readelf -h $@ | grep -q 'Type:[[:space:]]*EXEC'
 
 $(BUILD)/iso/boot/brx.elf: $(BUILD)/brx.elf | $(BUILD)

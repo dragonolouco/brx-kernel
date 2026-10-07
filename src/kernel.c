@@ -6,6 +6,7 @@
 #include "brx_pci.h"
 #include "brx_ps2.h"
 #include "brx_cpu.h"
+#include "brx_exec.h"
 
 #define COM1 0x3F8
 
@@ -56,6 +57,16 @@ static void serial_module(const brx_module_t *module) {
     serial_write(" state=");
     serial_write(module->state == BRX_MODULE_READY ? "ready" : "planned");
     serial_write("\n");
+}
+
+static void serial_exec_probe(const void *image, uint64_t length) {
+    brx_exec_format_t format = brx_exec_detect(image, length);
+    brx_exec_plan_t plan = brx_exec_plan(format);
+    serial_write("application loader: ");
+    serial_write(brx_exec_format_name(format));
+    serial_write(" -> ");
+    serial_write(brx_exec_backend_name(plan.backend));
+    serial_write(plan.supported ? " ready\n" : " integrated path pending\n");
 }
 
 __attribute__((used, section(".limine_requests_start"), aligned(8)))
@@ -132,10 +143,22 @@ void kmain(void) {
     brx_modules_init(&modules);
     brx_module_register(&modules, (brx_module_t){ "core.memory", "current", "physical page allocator", 1, 1, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.interrupts", "current", "IDT PIC PIT", 1, 2, BRX_MODULE_READY });
+    brx_module_register(&modules, (brx_module_t){ "core.application-loader", "current", "automatic format detection and internal dispatch", 1, 32, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "compat.posix", "planned", "POSIX service layer", 1, 4, BRX_MODULE_PLANNED });
     brx_module_register(&modules, (brx_module_t){ "compat.linux-abi", "planned", "Linux syscall translation", 1, 8, BRX_MODULE_PLANNED });
+    brx_module_register(&modules, (brx_module_t){ "compat.windows-source", "planned", "source-integrated Windows API runtime", 1, 64, BRX_MODULE_PLANNED });
     brx_module_register(&modules, (brx_module_t){ "user.git", "planned", "Git user-space integration", 1, 16, BRX_MODULE_PLANNED });
     for (uint64_t i = 0; i < brx_module_count(&modules); ++i) serial_module(brx_module_at(&modules, i));
+
+    static const uint8_t probe_elf[] = { 0x7f, 'E', 'L', 'F' };
+    static const uint8_t probe_pe[68] = {
+        [0] = 'M', [1] = 'Z', [0x3c] = 0x40,
+        [0x40] = 'P', [0x41] = 'E', [0x42] = 0, [0x43] = 0
+    };
+    static const uint8_t probe_script[] = { '#', '!', '/', 'b', 'i', 'n', '/', 's', 'h' };
+    serial_exec_probe(probe_elf, sizeof(probe_elf));
+    serial_exec_probe(probe_pe, sizeof(probe_pe));
+    serial_exec_probe(probe_script, sizeof(probe_script));
 
     brx_ps2_init();
     serial_write("input: PS/2 keyboard and mouse drivers initialized\n");

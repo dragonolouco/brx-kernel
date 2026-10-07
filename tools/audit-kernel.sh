@@ -22,6 +22,7 @@ check 'PCI hardware bus' test -f src/pci.c
 check 'PS/2 keyboard/mouse driver' test -f src/ps2.c
 check 'hardware matrix' test -f docs/HARDWARE.md
 check 'module ABI registry' test -f include/brx_module.h
+check 'internal application loader' test -f src/exec.c
 check 'compatibility architecture' test -f docs/ARCHITECTURE.md
 check 'automated QEMU test' grep -q 'make check' README.md
 check 'no kernel version branding' bash -c "! grep -q 'BRX Kernel 0\\.' src/kernel.c README.md"
