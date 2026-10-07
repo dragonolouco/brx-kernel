@@ -121,7 +121,14 @@ void brx_ui_render_windows(brx_ui_surface_t *surface, const brx_window_manager_t
         brx_ui_rect(surface, x + 2, y + 34, width - 4, height - 36, 0x111a2a);
         brx_ui_rect(surface, x + 2, y + 2, width - 4, 30, 0x263754);
         brx_ui_text(surface, x + 14, y + 10, window->title, 0xf2f6ff, 2);
-        brx_ui_rect(surface, x + width - 28, y + 10, 12, 12, 0xf06c75);
+        uint64_t controls = x + width - 112;
+        brx_ui_rect(surface, controls, y + 8, 22, 16, 0x344463);
+        brx_ui_rect(surface, controls + 32, y + 8, 22, 16, 0x344463);
+        brx_ui_rect(surface, controls + 64, y + 8, 22, 16, 0x8e3948);
+        brx_ui_rect(surface, controls + 6, y + 15, 10, 2, 0xb9c8df);
+        brx_ui_rect(surface, controls + 38, y + 13, 10, 7, 0xb9c8df);
+        brx_ui_rect(surface, controls + 70, y + 11, 10, 2, 0xffffff);
+        brx_ui_rect(surface, controls + 74, y + 7, 2, 10, 0xffffff);
     }
 }
 
@@ -137,4 +144,24 @@ void brx_ui_render_terminal(brx_ui_surface_t *surface, const brx_window_t *windo
     brx_ui_text(surface, x + 12, y + 12 + row * 22, "BRX> ", 0x68d391, 1);
     brx_ui_text(surface, x + 54, y + 12 + row * 22, brx_terminal_input(terminal), 0xf2f6ff, 1);
     brx_ui_rect(surface, x + 54 + brx_terminal_input_length(terminal) * 7, y + 10 + row * 22, 6, 14, 0xf2f6ff);
+}
+
+void brx_ui_render_appbar(brx_ui_surface_t *surface, const brx_window_manager_t *manager) {
+    if (!surface || !surface->ready || !manager) return;
+    uint64_t y = surface->height > 64 ? surface->height - 58 : 0;
+    brx_ui_rect(surface, 0, y, surface->width, 58, 0x172238);
+    brx_ui_rect(surface, 18, y + 10, 38, 38, 0x2f81f7);
+    brx_ui_rect(surface, 25, y + 17, 24, 5, 0xffffff);
+    brx_ui_rect(surface, 25, y + 26, 24, 5, 0xffffff);
+    brx_ui_rect(surface, 25, y + 35, 24, 5, 0xffffff);
+    uint64_t x = 78;
+    for (uint64_t i = 0; i < BRX_WINDOW_MAX; ++i) {
+        const brx_window_t *window = &manager->windows[i];
+        if (window->state == BRX_WINDOW_FREE || window->state == BRX_WINDOW_CLOSED) continue;
+        brx_ui_rect(surface, x, y + 10, 190, 38, window->focused ? 0x2d3b58 : 0x202c43);
+        brx_ui_rect(surface, x + 12, y + 19, 20, 20, 0x4d9cff);
+        brx_ui_text(surface, x + 44, y + 21, window->title, 0xf2f6ff, 1);
+        x += 202;
+        if (x + 190 >= surface->width) break;
+    }
 }

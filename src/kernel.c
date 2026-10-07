@@ -108,10 +108,12 @@ void kmain(void) {
     if (brx_framebuffer_request.response && brx_framebuffer_request.response->framebuffer_count > 0 && brx_framebuffer_request.response->framebuffers) {
         brx_framebuffer_t *framebuffer = brx_framebuffer_request.response->framebuffers[0];
         if (brx_ui_init(&surface, framebuffer)) {
+            brx_window_manager_set_screen(&window_manager, surface.width, surface.height);
             brx_ui_desktop(&surface);
             brx_window_create(&window_manager, "BRX TERMINAL", (brx_window_rect_t){ 180, 130, 520, 260 });
             brx_ui_render_windows(&surface, &window_manager);
-            brx_ui_render_terminal(&surface, brx_window_at(&window_manager, 200, 150), &terminal);
+            brx_ui_render_terminal(&surface, brx_window_find(&window_manager, window_manager.focused_id), &terminal);
+            brx_ui_render_appbar(&surface, &window_manager);
             brx_ui_cursor(&surface, surface.width / 2, surface.height / 2, 0xffffff);
             graphics_ready = 1;
             serial_write("graphics: BRX framebuffer interface initialized\n");
@@ -227,7 +229,8 @@ void kmain(void) {
             brx_window_handle_mouse(&window_manager, (brx_mouse_event_t){ (uint64_t)cursor_x, (uint64_t)cursor_y, (uint8_t)(brx_ps2_mouse_buttons() & 1), (uint8_t)(brx_ps2_mouse_buttons() & 2), (uint8_t)(brx_ps2_mouse_buttons() & 4) });
             brx_ui_desktop(&surface);
             brx_ui_render_windows(&surface, &window_manager);
-            brx_ui_render_terminal(&surface, brx_window_at(&window_manager, 200, 150), &terminal);
+            brx_ui_render_terminal(&surface, brx_window_find(&window_manager, window_manager.focused_id), &terminal);
+            brx_ui_render_appbar(&surface, &window_manager);
             brx_ui_cursor(&surface, cursor_x, cursor_y, brx_ps2_mouse_buttons() ? 0xf6c453 : 0xffffff);
         }
         if (graphics_ready) {
@@ -237,7 +240,8 @@ void kmain(void) {
                 brx_terminal_handle_key(&terminal, (char)key);
                 brx_ui_desktop(&surface);
                 brx_ui_render_windows(&surface, &window_manager);
-                brx_ui_render_terminal(&surface, brx_window_at(&window_manager, 200, 150), &terminal);
+                brx_ui_render_terminal(&surface, brx_window_find(&window_manager, window_manager.focused_id), &terminal);
+                brx_ui_render_appbar(&surface, &window_manager);
                 brx_ui_cursor(&surface, cursor_x, cursor_y, brx_ps2_mouse_buttons() ? 0xf6c453 : 0xffffff);
             }
         }

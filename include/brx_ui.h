@@ -29,5 +29,6 @@ void brx_ui_cursor(brx_ui_surface_t *surface, uint64_t x, uint64_t y, uint32_t c
 void brx_ui_desktop(brx_ui_surface_t *surface);
 void brx_ui_render_windows(brx_ui_surface_t *surface, const brx_window_manager_t *manager);
 void brx_ui_render_terminal(brx_ui_surface_t *surface, const brx_window_t *window, const brx_terminal_t *terminal);
+void brx_ui_render_appbar(brx_ui_surface_t *surface, const brx_window_manager_t *manager);
 
 #endif

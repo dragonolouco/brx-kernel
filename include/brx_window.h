@@ -9,6 +9,8 @@
 typedef enum {
     BRX_WINDOW_FREE = 0,
     BRX_WINDOW_OPEN,
+    BRX_WINDOW_MINIMIZED,
+    BRX_WINDOW_MAXIMIZED,
     BRX_WINDOW_CLOSED
 } brx_window_state_t;
 
@@ -31,6 +33,7 @@ typedef struct {
     uint64_t id;
     brx_window_state_t state;
     brx_window_rect_t rect;
+    brx_window_rect_t restore_rect;
     char title[BRX_WINDOW_TITLE_MAX];
     uint8_t focused;
     uint8_t dragging;
@@ -42,13 +45,18 @@ typedef struct {
     brx_window_t windows[BRX_WINDOW_MAX];
     uint64_t next_id;
     uint64_t focused_id;
+    uint64_t screen_width;
+    uint64_t screen_height;
 } brx_window_manager_t;
 
 void brx_window_manager_init(brx_window_manager_t *manager);
+void brx_window_manager_set_screen(brx_window_manager_t *manager, uint64_t width, uint64_t height);
 brx_window_t *brx_window_create(brx_window_manager_t *manager, const char *title, brx_window_rect_t rect);
 brx_window_t *brx_window_find(brx_window_manager_t *manager, uint64_t id);
 brx_window_t *brx_window_at(brx_window_manager_t *manager, uint64_t x, uint64_t y);
 int brx_window_close(brx_window_manager_t *manager, uint64_t id);
+int brx_window_minimize(brx_window_manager_t *manager, uint64_t id);
+int brx_window_toggle_maximize(brx_window_manager_t *manager, uint64_t id);
 int brx_window_handle_mouse(brx_window_manager_t *manager, brx_mouse_event_t event);
 
 #endif

@@ -10,6 +10,9 @@ int main(void) {
     if (brx_window_handle_mouse(&manager, (brx_mouse_event_t){120, 100, 1, 0, 0}) != 1) return 3;
     if (!window->dragging) return 4;
     if (brx_window_handle_mouse(&manager, (brx_mouse_event_t){220, 150, 1, 0, 0}) != 1 || window->rect.x != 200 || window->rect.y != 130) return 5;
+    if (brx_window_toggle_maximize(&manager, window->id) != 0 || window->state != BRX_WINDOW_MAXIMIZED) return 6;
+    if (brx_window_toggle_maximize(&manager, window->id) != 0 || window->state != BRX_WINDOW_OPEN || window->rect.x != 200) return 7;
+    if (brx_window_minimize(&manager, window->id) != 0 || window->state != BRX_WINDOW_MINIMIZED) return 8;
     if (brx_window_close(&manager, window->id) != 0 || brx_window_find(&manager, window->id)) return 6;
     puts("BRX window manager tests: PASS");
     return 0;
