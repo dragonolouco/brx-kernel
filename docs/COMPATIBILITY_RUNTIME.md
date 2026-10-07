@@ -49,20 +49,20 @@ O projeto será dividido em módulos de user space:
 
 Esses componentes não serão um programa que o usuário precise abrir manualmente. O shell/desktop BRX usará as funções internas como parte do fluxo normal de abertura. Os nomes acima são divisões de código e responsabilidades do sistema, não aplicativos que aparecerão no menu.
 
-## Uso do código do Proton
+## Referência ao Proton sem copiar código
 
-O Proton oficial é descrito como uma ferramenta para Steam Play baseada em Wine. O repositório contém Wine, DXVK, vkd3d-proton e outros componentes. Portanto, o BRX não deve copiar um executável pronto nem fingir que Proton é uma biblioteca única.
+O Proton oficial é descrito como uma ferramenta para Steam Play baseada em Wine. O repositório contém Wine, DXVK, vkd3d-proton e outros componentes. Ele pode ser estudado como referência arquitetural e comportamental, mas o BRX não deve copiar código, incorporar executáveis ou fingir que Proton é uma biblioteca única.
 
 O caminho correto é:
 
-1. estudar e selecionar os componentes de código-fonte necessários, sem incorporar executáveis prontos;
-2. preservar os arquivos de licença, avisos e atribuições de cada componente;
-3. criar uma adaptação BRX das dependências de Unix/Linux;
-4. compilar os componentes para a ABI BRX e incorporá-los ao sistema;
+1. estudar documentação, contratos e comportamento observável;
+2. escrever uma especificação BRX própria;
+3. implementar cada componente do zero, sem copiar arquivos ou funções externas;
+4. testar a implementação BRX contra formatos e casos de uso permitidos;
 5. integrar o dispatcher e a tela de carregamento ao shell do BRX, sem expor um aplicativo de tradução;
 6. manter uma matriz de compatibilidade por aplicativo e API.
 
-Proton tem licença BSD-3-Clause no repositório principal, Wine é LGPL-2.1 e DXVK usa licença zlib, enquanto outras dependências podem ter termos próprios. O nome do runtime BRX pode ser diferente, mas a origem e as licenças não podem ser apagadas.
+As licenças dos projetos estudados continuam sendo respeitadas, mas não serão usadas como licença de código BRX porque o runtime BRX será uma implementação nova. O nome do runtime BRX será próprio e não sugerirá vínculo ou endosso de terceiros.
 
 ## O que é e o que não é
 

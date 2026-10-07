@@ -2,7 +2,7 @@
 
 ## Princípio
 
-O caminho principal do BRX será pegar código-fonte de ferramentas, linguagens, bibliotecas e engines existentes e adaptar seus pontos de dependência para as APIs BRX. Depois, o projeto é compilado para gerar um executável nativo do BRX.
+O caminho principal do BRX será criar implementações e portas próprias a partir de contratos públicos. Quando uma ferramenta tiver código-fonte disponível e sua licença permitir um port, ela poderá ser portada respeitando a licença; para camadas de compatibilidade e emulação, o BRX escreverá código novo em modelo clean-room, sem copiar a implementação de projetos existentes.
 
 Isso é diferente de emulação e diferente de tradução de binário em tempo de execução:
 
