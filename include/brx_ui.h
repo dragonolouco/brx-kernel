@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "brx_boot.h"
+#include "brx_window.h"
 
 typedef struct {
     volatile uint8_t *address;
@@ -25,5 +26,6 @@ void brx_ui_rect(brx_ui_surface_t *surface, uint64_t x, uint64_t y, uint64_t wid
 void brx_ui_text(brx_ui_surface_t *surface, uint64_t x, uint64_t y, const char *text, uint32_t color, uint64_t scale);
 void brx_ui_cursor(brx_ui_surface_t *surface, uint64_t x, uint64_t y, uint32_t color);
 void brx_ui_desktop(brx_ui_surface_t *surface);
+void brx_ui_render_windows(brx_ui_surface_t *surface, const brx_window_manager_t *manager);
 
 #endif

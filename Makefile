@@ -81,8 +81,8 @@ $(BUILD)/test-boot: tools/test-boot.c src/boot.c include/brx_boot.h | $(BUILD)
 check-boot: $(BUILD)/test-boot
 	$(BUILD)/test-boot
 
-$(BUILD)/test-ui: tools/test-ui.c src/ui.c include/brx_ui.h include/brx_boot.h | $(BUILD)
-	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tools/test-ui.c src/ui.c -o $@
+$(BUILD)/test-ui: tools/test-ui.c src/ui.c src/window.c include/brx_ui.h include/brx_boot.h include/brx_window.h | $(BUILD)
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tools/test-ui.c src/ui.c src/window.c -o $@
 
 check-ui: $(BUILD)/test-ui
 	$(BUILD)/test-ui

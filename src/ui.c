@@ -105,3 +105,26 @@ void brx_ui_desktop(brx_ui_surface_t *surface) {
 
     brx_ui_text(surface, 24, height > 60 ? height - 42 : 20, "BRX GRAPHICS DIAGNOSTIC SURFACE", 0x7f8da8, 1);
 }
+
+void brx_ui_render_windows(brx_ui_surface_t *surface, const brx_window_manager_t *manager) {
+    if (!surface || !surface->ready || !manager) return;
+    for (uint64_t i = 0; i < BRX_WINDOW_MAX; ++i) {
+        const brx_window_t *window = &manager->windows[i];
+        if (window->state != BRX_WINDOW_OPEN) continue;
+        uint64_t x = window->rect.x;
+        uint64_t y = window->rect.y;
+        uint64_t width = window->rect.width;
+        uint64_t height = window->rect.height;
+        uint32_t frame = window->focused ? 0x4d9cff : 0x52627c;
+        brx_ui_rect(surface, x + 5, y + 7, width, height, 0x070b14);
+        brx_ui_rect(surface, x, y, width, height, frame);
+        brx_ui_rect(surface, x + 2, y + 34, width - 4, height - 36, 0x111a2a);
+        brx_ui_rect(surface, x + 2, y + 2, width - 4, 30, 0x263754);
+        brx_ui_text(surface, x + 14, y + 10, window->title, 0xf2f6ff, 2);
+        brx_ui_rect(surface, x + width - 28, y + 10, 12, 12, 0xf06c75);
+        brx_ui_text(surface, x + 20, y + 62, "KERNEL STATUS", 0x68d391, 2);
+        brx_ui_text(surface, x + 20, y + 98, "FRAMEBUFFER ONLINE", 0xf2f6ff, 1);
+        brx_ui_text(surface, x + 20, y + 122, "MOUSE INPUT ENABLED", 0xf2f6ff, 1);
+        brx_ui_text(surface, x + 20, y + 146, "NO USER APPLICATION", 0xf6c453, 1);
+    }
+}

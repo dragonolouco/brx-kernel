@@ -59,6 +59,7 @@ int brx_window_close(brx_window_manager_t *manager, uint64_t id) {
 int brx_window_handle_mouse(brx_window_manager_t *manager, brx_mouse_event_t event) {
     brx_window_t *window = brx_window_at(manager, event.x, event.y);
     if (event.left && window) {
+        if (event.y < window->rect.y + 32 && event.x >= window->rect.x + window->rect.width - 40) return brx_window_close(manager, window->id) == 0;
         if (manager->focused_id != window->id) {
             manager->focused_id = window->id;
             for (uint64_t i = 0; i < BRX_WINDOW_MAX; ++i) manager->windows[i].focused = manager->windows[i].id == window->id;
