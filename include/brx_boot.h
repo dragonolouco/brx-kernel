@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#define BRX_BOOT_MAGIC 0x425258424f4f5431ULL
+#define BRX_BOOT_ABI 1
+
 #define BRX_COMMON_MAGIC_A 0xc7b1dd30df4c8b88ULL
 #define BRX_COMMON_MAGIC_B 0x0a82e883a194f07bULL
 #define BRX_REQUESTS_START_A 0xf6b8f4b39de7d1aeULL
@@ -44,5 +47,28 @@ typedef struct {
     uint64_t revision;
     brx_memmap_response_t *response;
 } brx_memmap_request_t;
+
+typedef struct {
+    uint64_t base;
+    uint64_t length;
+    uint32_t type;
+    uint32_t reserved;
+} brx_boot_memory_range_t;
+
+typedef struct {
+    uint64_t magic;
+    uint64_t abi;
+    uint64_t memory_map;
+    uint64_t memory_count;
+    uint64_t kernel_base;
+    uint64_t kernel_length;
+    uint64_t framebuffer_address;
+    uint64_t framebuffer_width;
+    uint64_t framebuffer_height;
+    uint64_t framebuffer_pitch;
+    uint64_t rsdp_address;
+} brx_boot_info_t;
+
+int brx_boot_info_valid(const brx_boot_info_t *info);
 
 #endif

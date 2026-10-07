@@ -142,6 +142,7 @@ void kmain(void) {
 
     brx_module_registry_t modules;
     brx_modules_init(&modules);
+    brx_module_register(&modules, (brx_module_t){ "core.boot-contract", "current", "BRX boot information ABI", 1, 512, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.memory", "current", "physical page allocator", 1, 1, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.virtual-memory", "current", "virtual address region manager", 1, 128, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.processes", "current", "process table and user stack model", 1, 256, BRX_MODULE_READY });

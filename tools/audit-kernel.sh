@@ -14,6 +14,7 @@ check() {
 
 printf 'BRX Kernel audit\n================\n'
 check 'x86_64 boot' test -f src/kernel.c
+check 'BRX boot contract' test -f src/boot.c
 check 'Limine requests' grep -q 'limine_requests' src/kernel.c
 check 'physical page allocator' test -f src/memory.c
 check 'IDT/PIC/PIT' test -f src/interrupts.c
