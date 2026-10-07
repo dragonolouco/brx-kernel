@@ -24,6 +24,8 @@ check 'hardware matrix' test -f docs/HARDWARE.md
 check 'module ABI registry' test -f include/brx_module.h
 check 'internal application loader' test -f src/exec.c
 check 'clean-room PE parser' test -f src/pe.c
+check 'virtual memory regions' test -f src/vmem.c
+check 'process model' test -f src/process.c
 check 'compatibility architecture' test -f docs/ARCHITECTURE.md
 check 'automated QEMU test' grep -q 'make check' README.md
 check 'no kernel version branding' bash -c "! grep -q 'BRX Kernel 0\\.' src/kernel.c README.md"

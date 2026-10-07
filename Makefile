@@ -13,7 +13,7 @@ all: $(BUILD)/brx.elf
 $(BUILD):
 	mkdir -p $(BUILD)/iso/boot
 
-$(BUILD)/kernel.o: src/kernel.c include/brx_boot.h include/brx_memory.h include/brx_interrupts.h include/brx_module.h include/brx_exec.h include/brx_elf.h | $(BUILD)
+$(BUILD)/kernel.o: src/kernel.c include/brx_boot.h include/brx_memory.h include/brx_interrupts.h include/brx_module.h include/brx_exec.h include/brx_elf.h include/brx_process.h | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD)/memory.o: src/memory.c include/brx_memory.h include/brx_boot.h | $(BUILD)
@@ -43,8 +43,14 @@ $(BUILD)/elf.o: src/elf.c include/brx_elf.h | $(BUILD)
 $(BUILD)/pe.o: src/pe.c include/brx_pe.h | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD)/brx.elf: $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o $(BUILD)/exec.o $(BUILD)/elf.o $(BUILD)/pe.o linker/brx.ld
-	$(LD) $(LDFLAGS) -o $@ $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o $(BUILD)/exec.o $(BUILD)/elf.o $(BUILD)/pe.o
+$(BUILD)/vmem.o: src/vmem.c include/brx_vmem.h | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/process.o: src/process.c include/brx_process.h include/brx_vmem.h | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/brx.elf: $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o $(BUILD)/exec.o $(BUILD)/elf.o $(BUILD)/pe.o $(BUILD)/vmem.o $(BUILD)/process.o linker/brx.ld
+	$(LD) $(LDFLAGS) -o $@ $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o $(BUILD)/exec.o $(BUILD)/elf.o $(BUILD)/pe.o $(BUILD)/vmem.o $(BUILD)/process.o
 
 $(BUILD)/test-exec-loader: tools/test-exec-loader.c tools/test-pe-loader.c src/exec.c src/elf.c src/pe.c include/brx_exec.h include/brx_elf.h include/brx_pe.h | $(BUILD)
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tools/test-exec-loader.c src/exec.c src/elf.c src/pe.c -o $@
@@ -53,6 +59,12 @@ $(BUILD)/test-exec-loader: tools/test-exec-loader.c tools/test-pe-loader.c src/e
 check-loader: $(BUILD)/test-exec-loader
 	$(BUILD)/test-exec-loader
 	$(BUILD)/test-pe-loader
+
+$(BUILD)/test-process: tools/test-process.c src/process.c src/vmem.c include/brx_process.h include/brx_vmem.h | $(BUILD)
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tools/test-process.c src/process.c src/vmem.c -o $@
+
+check-process: $(BUILD)/test-process
+	$(BUILD)/test-process
 
 $(BUILD)/iso/boot/brx.elf: $(BUILD)/brx.elf | $(BUILD)
 	cp $< $@
@@ -76,7 +88,7 @@ iso: $(BUILD)/iso/boot/brx.elf $(BUILD)/iso/boot/limine/limine.conf $(LIMINE)/li
 run: iso
 	timeout 8s qemu-system-x86_64 -M q35 -m 256M -cdrom $(BUILD)/brx.iso -serial stdio -display none -no-reboot -no-shutdown
 
-check: check-loader iso
+check: check-loader check-process iso
 	rm -f $(BUILD)/qemu.log
 	timeout 8s qemu-system-x86_64 -M q35 -m 256M -cdrom $(BUILD)/brx.iso -boot d -serial file:$(BUILD)/qemu.log -display none -no-reboot -no-shutdown || test $$? -eq 124
 	grep -q 'BRX bootstrap complete' $(BUILD)/qemu.log

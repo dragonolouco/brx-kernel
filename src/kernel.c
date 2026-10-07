@@ -7,6 +7,7 @@
 #include "brx_ps2.h"
 #include "brx_cpu.h"
 #include "brx_exec.h"
+#include "brx_process.h"
 
 #define COM1 0x3F8
 
@@ -142,6 +143,8 @@ void kmain(void) {
     brx_module_registry_t modules;
     brx_modules_init(&modules);
     brx_module_register(&modules, (brx_module_t){ "core.memory", "current", "physical page allocator", 1, 1, BRX_MODULE_READY });
+    brx_module_register(&modules, (brx_module_t){ "core.virtual-memory", "current", "virtual address region manager", 1, 128, BRX_MODULE_READY });
+    brx_module_register(&modules, (brx_module_t){ "core.processes", "current", "process table and user stack model", 1, 256, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.interrupts", "current", "IDT PIC PIT", 1, 2, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.application-loader", "current", "automatic format detection and internal dispatch", 1, 32, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "compat.posix", "planned", "POSIX service layer", 1, 4, BRX_MODULE_PLANNED });
