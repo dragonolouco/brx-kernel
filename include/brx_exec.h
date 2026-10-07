@@ -29,6 +29,7 @@ typedef struct {
 } brx_exec_plan_t;
 
 brx_exec_format_t brx_exec_detect(const void *image, uint64_t length);
+int brx_exec_validate(const void *image, uint64_t length, brx_exec_format_t format);
 brx_exec_plan_t brx_exec_plan(brx_exec_format_t format);
 const char *brx_exec_format_name(brx_exec_format_t format);
 const char *brx_exec_backend_name(brx_exec_backend_t backend);
