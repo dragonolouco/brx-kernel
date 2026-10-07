@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-O BRX é um sistema operacional próprio com uma arquitetura modular. A semelhança com Linux está nas interfaces que o usuário espera encontrar — processos, arquivos, rede, terminal, permissões e ferramentas — e não no código interno do kernel.
+O BRX é um sistema operacional próprio com uma arquitetura modular. A semelhança com Linux estará nas interfaces que o usuário espera encontrar — processos, arquivos, rede, terminal, permissões e ferramentas — e não no código interno do kernel. O caminho principal será adaptar código-fonte e recompilar para BRX, não emular binários.
 
 A ideia de “LEGO” significa que cada capacidade é um módulo com contrato explícito, dependências e ciclo de vida. O núcleo mínimo não precisa conter todos os drivers, sistemas de arquivos ou compatibilidades.
 
@@ -22,13 +22,19 @@ Microfundação BRX: memória, interrupções, scheduler, IPC
 Hardware x86_64 / firmware / bootloader
 ```
 
-## Compatibilidade Linux
+## Compatibilidade por código-fonte
 
-Há três níveis possíveis, que serão implementados em ordem:
+Quando o código-fonte estiver disponível, a preferência é adaptar headers, libc, syscalls, filesystem, rede, gráficos e input para o SDK BRX. O resultado será um ELF nativo compilado para o alvo BRX. Linguagens e engines não serão executadas por uma tradução contínua: seus compiladores, interpretadores ou runtimes serão portados para consumir os serviços BRX.
 
-1. **Ferramentas recompiladas**: portar utilitários para a API POSIX/BRX.
-2. **Compatibilidade de syscalls**: oferecer uma ABI Linux compatível e traduzir chamadas para os serviços BRX.
-3. **Binários ELF Linux sem recompilar**: loader ELF, linker de runtime, sinais, threads, `/proc`, `/dev`, sockets e demais contratos necessários.
+Esse modelo permite portar C, C++, Rust, Go, Python, Lua e engines gradualmente, começando por uma toolchain externa que gere programas BRX e depois chegando a um BRX self-hosting que compile seus próprios programas.
+
+## Compatibilidade Linux opcional
+
+Quando não houver código-fonte ou quando um port for inviável, uma camada opcional poderá reduzir o esforço:
+
+1. **Ferramentas recompiladas**: caminho padrão; portar utilitários para a API BRX.
+2. **Compatibilidade de syscalls**: caminho auxiliar para reduzir alterações no código.
+3. **Binários ELF Linux sem recompilar**: último recurso, exigindo loader, sinais, threads, `/proc`, `/dev`, sockets e demais contratos.
 
 Não devemos prometer que um binário Linux roda apenas porque o kernel inicia. A compatibilidade é um produto de vários contratos, não um arquivo copiado do Linux.
 
@@ -43,7 +49,7 @@ Git será uma ferramenta de user space, não uma parte do kernel. Para executar 
 - relógio, aleatoriedade, permissões e armazenamento;
 - port da biblioteca C e do runtime usado pelo Git.
 
-O módulo `user.git` é registrado como planejado para tornar essa dependência visível. Depois da camada POSIX, Git poderá ser recompilado para BRX; depois da Linux ABI, poderemos avaliar binários Linux sem recompilação.
+O módulo `user.git` é registrado como planejado para tornar essa dependência visível. O objetivo é recompilar Git para BRX contra `brx-libc`, `brx-vfs`, `brx-net` e `brx-thread`. A execução de um binário Linux sem recompilar fica fora do caminho principal.
 
 ## ABI de módulos
 
