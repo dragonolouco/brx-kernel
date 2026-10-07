@@ -8,6 +8,11 @@ static volatile uint64_t events;
 static volatile uint8_t last_scancode;
 static volatile uint64_t mouse_events;
 static volatile uint8_t last_mouse_byte;
+static volatile uint8_t mouse_packet[3];
+static volatile uint8_t mouse_packet_index;
+static volatile int64_t mouse_x;
+static volatile int64_t mouse_y;
+static volatile uint8_t mouse_buttons;
 
 static inline void out8(uint16_t port, uint8_t value) {
     __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
@@ -65,8 +70,23 @@ uint8_t brx_ps2_last_scancode(void) { return last_scancode; }
 void brx_ps2_handle_mouse_irq(void) {
     if (in8(PS2_STATUS) & 1) {
         last_mouse_byte = in8(PS2_DATA);
-        mouse_events++;
+        if (mouse_packet_index == 0 && !(last_mouse_byte & 0x08)) return;
+        mouse_packet[mouse_packet_index++] = last_mouse_byte;
+        if (mouse_packet_index == 3) {
+            int16_t dx = (int8_t)mouse_packet[1];
+            int16_t dy = (int8_t)mouse_packet[2];
+            if (mouse_packet[0] & 0x40) dx = 0;
+            if (mouse_packet[0] & 0x80) dy = 0;
+            mouse_x += dx;
+            mouse_y -= dy;
+            mouse_buttons = mouse_packet[0] & 0x07;
+            mouse_packet_index = 0;
+            mouse_events++;
+        }
     }
 }
 uint64_t brx_ps2_mouse_event_count(void) { return mouse_events; }
 uint8_t brx_ps2_last_mouse_byte(void) { return last_mouse_byte; }
+int64_t brx_ps2_mouse_x(void) { return mouse_x; }
+int64_t brx_ps2_mouse_y(void) { return mouse_y; }
+uint8_t brx_ps2_mouse_buttons(void) { return mouse_buttons; }

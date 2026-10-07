@@ -98,11 +98,13 @@ void kmain(void) {
     serial_write("status: native x86_64 kernel online\n");
 
     brx_ui_surface_t surface = {0};
+    uint8_t graphics_ready = 0;
     if (brx_framebuffer_request.response && brx_framebuffer_request.response->framebuffer_count > 0 && brx_framebuffer_request.response->framebuffers) {
         brx_framebuffer_t *framebuffer = brx_framebuffer_request.response->framebuffers[0];
         if (brx_ui_init(&surface, framebuffer)) {
             brx_ui_desktop(&surface);
             brx_ui_cursor(&surface, surface.width / 2, surface.height / 2, 0xffffff);
+            graphics_ready = 1;
             serial_write("graphics: BRX framebuffer interface initialized\n");
         } else serial_write("graphics: framebuffer format unsupported\n");
     } else serial_write("graphics: no framebuffer supplied by bootloader\n");
@@ -191,9 +193,29 @@ void kmain(void) {
     serial_write("idle: timer interrupts enabled; scheduler pending\n");
 
     uint64_t last_report = 0;
+    uint64_t last_mouse_event = 0;
+    int64_t cursor_x = surface.width / 2;
+    int64_t cursor_y = surface.height / 2;
+    int64_t last_mouse_x = brx_ps2_mouse_x();
+    int64_t last_mouse_y = brx_ps2_mouse_y();
     for (;;) {
         __asm__ volatile ("hlt");
         uint64_t now = brx_timer_ticks();
+        if (graphics_ready && brx_ps2_mouse_event_count() != last_mouse_event) {
+            last_mouse_event = brx_ps2_mouse_event_count();
+            int64_t current_mouse_x = brx_ps2_mouse_x();
+            int64_t current_mouse_y = brx_ps2_mouse_y();
+            cursor_x += current_mouse_x - last_mouse_x;
+            cursor_y += current_mouse_y - last_mouse_y;
+            last_mouse_x = current_mouse_x;
+            last_mouse_y = current_mouse_y;
+            if (cursor_x < 0) cursor_x = 0;
+            if (cursor_y < 0) cursor_y = 0;
+            if ((uint64_t)cursor_x >= surface.width) cursor_x = surface.width - 1;
+            if ((uint64_t)cursor_y >= surface.height) cursor_y = surface.height - 1;
+            brx_ui_desktop(&surface);
+            brx_ui_cursor(&surface, cursor_x, cursor_y, brx_ps2_mouse_buttons() ? 0xf6c453 : 0xffffff);
+        }
         if (now >= last_report + 100) {
             last_report = now;
             serial_write("timer ticks: ");

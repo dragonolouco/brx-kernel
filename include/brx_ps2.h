@@ -10,5 +10,8 @@ uint64_t brx_ps2_event_count(void);
 uint8_t brx_ps2_last_scancode(void);
 uint64_t brx_ps2_mouse_event_count(void);
 uint8_t brx_ps2_last_mouse_byte(void);
+int64_t brx_ps2_mouse_x(void);
+int64_t brx_ps2_mouse_y(void);
+uint8_t brx_ps2_mouse_buttons(void);
 
 #endif
