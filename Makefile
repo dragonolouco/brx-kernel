@@ -7,7 +7,7 @@ LD := ld
 CFLAGS := -std=c11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-stack-protector -fno-pie -fno-asynchronous-unwind-tables -mno-red-zone -mno-sse -mno-sse2 -mno-mmx -mcmodel=kernel -m64 -Iinclude
 LDFLAGS := -nostdlib -z max-page-size=0x1000 -T linker/brx.ld
 
-.PHONY: all clean iso run check
+.PHONY: all clean iso run check check-loader
 all: $(BUILD)/brx.elf
 
 $(BUILD):
@@ -34,12 +34,20 @@ $(BUILD)/pci.o: src/pci.c include/brx_pci.h | $(BUILD)
 $(BUILD)/ps2.o: src/ps2.c include/brx_ps2.h | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD)/exec.o: src/exec.c include/brx_exec.h | $(BUILD)
+$(BUILD)/exec.o: src/exec.c include/brx_exec.h include/brx_elf.h | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD)/brx.elf: $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o $(BUILD)/exec.o linker/brx.ld
-	$(LD) $(LDFLAGS) -o $@ $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o $(BUILD)/exec.o
-	readelf -h $@ | grep -q 'Type:[[:space:]]*EXEC'
+$(BUILD)/elf.o: src/elf.c include/brx_elf.h | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/brx.elf: $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o $(BUILD)/exec.o $(BUILD)/elf.o linker/brx.ld
+	$(LD) $(LDFLAGS) -o $@ $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o $(BUILD)/exec.o $(BUILD)/elf.o
+
+$(BUILD)/test-exec-loader: tools/test-exec-loader.c src/exec.c src/elf.c include/brx_exec.h include/brx_elf.h | $(BUILD)
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tools/test-exec-loader.c src/exec.c src/elf.c -o $@
+
+check-loader: $(BUILD)/test-exec-loader
+	$(BUILD)/test-exec-loader
 
 $(BUILD)/iso/boot/brx.elf: $(BUILD)/brx.elf | $(BUILD)
 	cp $< $@
@@ -63,7 +71,7 @@ iso: $(BUILD)/iso/boot/brx.elf $(BUILD)/iso/boot/limine/limine.conf $(LIMINE)/li
 run: iso
 	timeout 8s qemu-system-x86_64 -M q35 -m 256M -cdrom $(BUILD)/brx.iso -serial stdio -display none -no-reboot -no-shutdown
 
-check: iso
+check: check-loader iso
 	rm -f $(BUILD)/qemu.log
 	timeout 8s qemu-system-x86_64 -M q35 -m 256M -cdrom $(BUILD)/brx.iso -boot d -serial file:$(BUILD)/qemu.log -display none -no-reboot -no-shutdown || test $$? -eq 124
 	grep -q 'BRX bootstrap complete' $(BUILD)/qemu.log
