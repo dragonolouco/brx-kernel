@@ -9,6 +9,7 @@
 #include "brx_exec.h"
 #include "brx_process.h"
 #include "brx_ui.h"
+#include "brx_window.h"
 
 #define COM1 0x3F8
 
@@ -165,6 +166,7 @@ void kmain(void) {
     brx_module_register(&modules, (brx_module_t){ "core.virtual-memory", "current", "virtual address region manager", 1, 128, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.processes", "current", "process table and user stack model", 1, 256, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.graphical-interface", "current", "framebuffer compositor and BRX desktop surface", 1, 1024, BRX_MODULE_READY });
+    brx_module_register(&modules, (brx_module_t){ "core.window-manager", "current", "window state, focus, hit-test and drag backend", 1, 2048, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.interrupts", "current", "IDT PIC PIT", 1, 2, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.application-loader", "current", "automatic format detection and internal dispatch", 1, 32, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "compat.posix", "planned", "POSIX service layer", 1, 4, BRX_MODULE_PLANNED });
