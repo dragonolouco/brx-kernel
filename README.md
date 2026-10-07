@@ -49,7 +49,7 @@ O teste `make check` executa a ISO no QEMU sem interface gráfica e verifica a m
 
 O núcleo atual já tem boot, console serial, mapa de memória, alocador físico, IDT/PIC/PIT, IRQ de timer, enumeração PCI, driver PS/2 inicial e registro modular. O scheduler, paginação virtual, processos, VFS, rede, user space e a camada Linux ABI ainda estão planejados; o registro informa esses módulos como `planned`, sem fingir que já estão prontos.
 
-Leia [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) para a arquitetura de compatibilidade, [docs/PORTING.md](docs/PORTING.md) para a estratégia source-first de recompilar ferramentas e linguagens para BRX e [docs/HARDWARE.md](docs/HARDWARE.md) para os drivers.
+Leia [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) para a arquitetura de compatibilidade, [docs/PORTING.md](docs/PORTING.md) para a estratégia source-first de recompilar ferramentas e linguagens para BRX, [docs/COMPATIBILITY_RUNTIME.md](docs/COMPATIBILITY_RUNTIME.md) para o dispatcher automático de executáveis e [docs/HARDWARE.md](docs/HARDWARE.md) para os drivers.
 
 ## Licença
 
