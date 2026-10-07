@@ -24,5 +24,6 @@ void brx_ui_clear(brx_ui_surface_t *surface, uint32_t color);
 void brx_ui_rect(brx_ui_surface_t *surface, uint64_t x, uint64_t y, uint64_t width, uint64_t height, uint32_t color);
 void brx_ui_text(brx_ui_surface_t *surface, uint64_t x, uint64_t y, const char *text, uint32_t color, uint64_t scale);
 void brx_ui_cursor(brx_ui_surface_t *surface, uint64_t x, uint64_t y, uint32_t color);
+void brx_ui_desktop(brx_ui_surface_t *surface);
 
 #endif

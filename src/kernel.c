@@ -101,17 +101,7 @@ void kmain(void) {
     if (brx_framebuffer_request.response && brx_framebuffer_request.response->framebuffer_count > 0 && brx_framebuffer_request.response->framebuffers) {
         brx_framebuffer_t *framebuffer = brx_framebuffer_request.response->framebuffers[0];
         if (brx_ui_init(&surface, framebuffer)) {
-            brx_ui_clear(&surface, 0x101522);
-            brx_ui_rect(&surface, 0, 0, surface.width, 64, 0x18243a);
-            brx_ui_rect(&surface, 36, 104, surface.width > 72 ? surface.width - 72 : 0, 2, 0x2f81f7);
-            brx_ui_text(&surface, 40, 20, "BRX KERNEL", 0xf2f6ff, 4);
-            brx_ui_text(&surface, 56, 136, "GRAPHICAL INTERFACE", 0xb9c8df, 2);
-            brx_ui_rect(&surface, 56, 178, 300, 150, 0x18243a);
-            brx_ui_rect(&surface, 380, 178, 300, 150, 0x18243a);
-            brx_ui_text(&surface, 80, 204, "SYSTEM", 0x68d391, 2);
-            brx_ui_text(&surface, 80, 244, "NATIVE CORE", 0xf2f6ff, 2);
-            brx_ui_text(&surface, 404, 204, "STATUS", 0x68d391, 2);
-            brx_ui_text(&surface, 404, 244, "READY", 0xf2f6ff, 2);
+            brx_ui_desktop(&surface);
             brx_ui_cursor(&surface, surface.width / 2, surface.height / 2, 0xffffff);
             serial_write("graphics: BRX framebuffer interface initialized\n");
         } else serial_write("graphics: framebuffer format unsupported\n");

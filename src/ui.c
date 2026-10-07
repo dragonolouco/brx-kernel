@@ -75,3 +75,54 @@ void brx_ui_cursor(brx_ui_surface_t *surface, uint64_t x, uint64_t y, uint32_t c
     if (!surface || !surface->ready) return;
     for (uint64_t i = 0; i < 14; ++i) { pixel(surface, x + i / 2, y + i, color); if (i < 8) pixel(surface, x + i, y + i, color); }
 }
+
+static void window(brx_ui_surface_t *surface, uint64_t x, uint64_t y, uint64_t width, uint64_t height, const char *title) {
+    brx_ui_rect(surface, x + 4, y + 6, width, height, 0x070b14);
+    brx_ui_rect(surface, x, y, width, height, 0x202c43);
+    brx_ui_rect(surface, x, y, width, 34, 0x2d3b58);
+    brx_ui_rect(surface, x + width - 76, y + 9, 10, 10, 0xf6c453);
+    brx_ui_rect(surface, x + width - 52, y + 9, 10, 10, 0x68d391);
+    brx_ui_rect(surface, x + width - 28, y + 9, 10, 10, 0xf06c75);
+    brx_ui_text(surface, x + 16, y + 10, title, 0xf2f6ff, 2);
+}
+
+void brx_ui_desktop(brx_ui_surface_t *surface) {
+    if (!surface || !surface->ready) return;
+    uint64_t width = surface->width;
+    uint64_t height = surface->height;
+    brx_ui_clear(surface, 0x0d1220);
+    brx_ui_rect(surface, 0, 0, width, 42, 0x172238);
+    brx_ui_text(surface, 22, 12, "BRX", 0x7eb6ff, 2);
+    brx_ui_text(surface, width > 240 ? width - 210 : 20, 12, "SYSTEM READY", 0x68d391, 2);
+
+    /* Desktop icons. */
+    brx_ui_rect(surface, 34, 76, 48, 48, 0x2f81f7);
+    brx_ui_rect(surface, 42, 84, 32, 24, 0x9fc7ff);
+    brx_ui_text(surface, 28, 134, "FILES", 0xf2f6ff, 1);
+    brx_ui_rect(surface, 34, 178, 48, 48, 0x68d391);
+    brx_ui_rect(surface, 44, 190, 28, 24, 0x172238);
+    brx_ui_text(surface, 24, 234, "TERMINAL", 0xf2f6ff, 1);
+    brx_ui_rect(surface, 34, 278, 48, 48, 0xf6c453);
+    brx_ui_rect(surface, 45, 289, 26, 26, 0x172238);
+    brx_ui_text(surface, 24, 334, "SETTINGS", 0xf2f6ff, 1);
+
+    /* First real window surface. */
+    uint64_t window_width = width > 820 ? 700 : width > 520 ? width - 180 : width - 120;
+    uint64_t window_height = height > 560 ? 360 : height - 170;
+    window(surface, 150, 90, window_width, window_height, "TERMINAL");
+    brx_ui_rect(surface, 170, 144, window_width - 40, window_height - 64, 0x0a0f19);
+    brx_ui_text(surface, 190, 170, "BRX TERMINAL", 0x68d391, 2);
+    brx_ui_text(surface, 190, 208, "WELCOME TO THE BRX SYSTEM", 0xf2f6ff, 1);
+    brx_ui_text(surface, 190, 238, "TYPE HELP TO LIST COMMANDS", 0xb9c8df, 1);
+    brx_ui_text(surface, 190, 280, "BRX", 0x7eb6ff, 1);
+    brx_ui_rect(surface, 224, 280, 9, 15, 0xf2f6ff);
+
+    /* Bottom dock and status area. */
+    uint64_t dock_width = width > 760 ? 520 : width - 80;
+    uint64_t dock_x = (width - dock_width) / 2;
+    uint64_t dock_y = height > 80 ? height - 62 : 0;
+    brx_ui_rect(surface, dock_x + 4, dock_y + 5, dock_width, 48, 0x070b14);
+    brx_ui_rect(surface, dock_x, dock_y, dock_width, 48, 0x202c43);
+    for (uint64_t i = 0; i < 5; ++i) brx_ui_rect(surface, dock_x + 24 + i * 72, dock_y + 12, 24, 24, i == 1 ? 0x68d391 : 0x7eb6ff);
+    brx_ui_text(surface, dock_x + dock_width - 110, dock_y + 18, "BRX", 0xf2f6ff, 1);
+}
