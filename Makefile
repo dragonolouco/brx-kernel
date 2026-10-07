@@ -13,7 +13,7 @@ all: $(BUILD)/brx.elf
 $(BUILD):
 	mkdir -p $(BUILD)/iso/boot
 
-$(BUILD)/kernel.o: src/kernel.c include/brx_boot.h include/brx_memory.h include/brx_interrupts.h include/brx_module.h include/brx_exec.h | $(BUILD)
+$(BUILD)/kernel.o: src/kernel.c include/brx_boot.h include/brx_memory.h include/brx_interrupts.h include/brx_module.h include/brx_exec.h include/brx_elf.h | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD)/memory.o: src/memory.c include/brx_memory.h include/brx_boot.h | $(BUILD)
@@ -34,20 +34,25 @@ $(BUILD)/pci.o: src/pci.c include/brx_pci.h | $(BUILD)
 $(BUILD)/ps2.o: src/ps2.c include/brx_ps2.h | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD)/exec.o: src/exec.c include/brx_exec.h include/brx_elf.h | $(BUILD)
+$(BUILD)/exec.o: src/exec.c include/brx_exec.h include/brx_elf.h include/brx_pe.h | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD)/elf.o: src/elf.c include/brx_elf.h | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD)/brx.elf: $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o $(BUILD)/exec.o $(BUILD)/elf.o linker/brx.ld
-	$(LD) $(LDFLAGS) -o $@ $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o $(BUILD)/exec.o $(BUILD)/elf.o
+$(BUILD)/pe.o: src/pe.c include/brx_pe.h | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD)/test-exec-loader: tools/test-exec-loader.c src/exec.c src/elf.c include/brx_exec.h include/brx_elf.h | $(BUILD)
-	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tools/test-exec-loader.c src/exec.c src/elf.c -o $@
+$(BUILD)/brx.elf: $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o $(BUILD)/exec.o $(BUILD)/elf.o $(BUILD)/pe.o linker/brx.ld
+	$(LD) $(LDFLAGS) -o $@ $(BUILD)/kernel.o $(BUILD)/memory.o $(BUILD)/interrupts.o $(BUILD)/interrupts-asm.o $(BUILD)/module.o $(BUILD)/pci.o $(BUILD)/ps2.o $(BUILD)/exec.o $(BUILD)/elf.o $(BUILD)/pe.o
+
+$(BUILD)/test-exec-loader: tools/test-exec-loader.c tools/test-pe-loader.c src/exec.c src/elf.c src/pe.c include/brx_exec.h include/brx_elf.h include/brx_pe.h | $(BUILD)
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tools/test-exec-loader.c src/exec.c src/elf.c src/pe.c -o $@
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -Iinclude tools/test-pe-loader.c src/pe.c -o $(BUILD)/test-pe-loader
 
 check-loader: $(BUILD)/test-exec-loader
 	$(BUILD)/test-exec-loader
+	$(BUILD)/test-pe-loader
 
 $(BUILD)/iso/boot/brx.elf: $(BUILD)/brx.elf | $(BUILD)
 	cp $< $@

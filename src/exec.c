@@ -1,4 +1,6 @@
 #include "brx_exec.h"
+#include "brx_elf.h"
+#include "brx_pe.h"
 
 static uint32_t read32(const uint8_t *bytes) {
     return (uint32_t)bytes[0]
@@ -33,6 +35,23 @@ brx_exec_format_t brx_exec_detect(const void *image, uint64_t length) {
     if (has_bytes(bytes, length, 0, 2) && bytes[0] == '#' && bytes[1] == '!') return BRX_EXEC_SCRIPT;
     if (has_bytes(bytes, length, 0, 4) && bytes[0] == 'B' && bytes[1] == 'R' && bytes[2] == 'X' && bytes[3] == 'P') return BRX_EXEC_PACKAGE;
     return BRX_EXEC_UNKNOWN;
+}
+
+int brx_exec_validate(const void *image, uint64_t length, brx_exec_format_t format) {
+    brx_elf_image_t elf;
+    brx_pe_image_t pe;
+    switch (format) {
+    case BRX_EXEC_BRX_ELF:
+    case BRX_EXEC_LINUX_ELF:
+        return brx_elf_validate_x86_64(image, length, &elf);
+    case BRX_EXEC_WINDOWS_PE:
+        return brx_pe_validate_x86_64(image, length, &pe);
+    case BRX_EXEC_SCRIPT:
+    case BRX_EXEC_PACKAGE:
+        return image && length >= 2;
+    default:
+        return 0;
+    }
 }
 
 brx_exec_plan_t brx_exec_plan(brx_exec_format_t format) {
