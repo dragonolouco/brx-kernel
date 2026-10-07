@@ -10,6 +10,7 @@
 #include "brx_process.h"
 #include "brx_ui.h"
 #include "brx_window.h"
+#include "brx_terminal.h"
 
 #define COM1 0x3F8
 
@@ -101,13 +102,16 @@ void kmain(void) {
     brx_ui_surface_t surface = {0};
     brx_window_manager_t window_manager;
     brx_window_manager_init(&window_manager);
+    brx_terminal_t terminal;
+    brx_terminal_init(&terminal);
     uint8_t graphics_ready = 0;
     if (brx_framebuffer_request.response && brx_framebuffer_request.response->framebuffer_count > 0 && brx_framebuffer_request.response->framebuffers) {
         brx_framebuffer_t *framebuffer = brx_framebuffer_request.response->framebuffers[0];
         if (brx_ui_init(&surface, framebuffer)) {
             brx_ui_desktop(&surface);
-            brx_window_create(&window_manager, "KERNEL STATUS", (brx_window_rect_t){ 180, 130, 520, 260 });
+            brx_window_create(&window_manager, "BRX TERMINAL", (brx_window_rect_t){ 180, 130, 520, 260 });
             brx_ui_render_windows(&surface, &window_manager);
+            brx_ui_render_terminal(&surface, brx_window_at(&window_manager, 200, 150), &terminal);
             brx_ui_cursor(&surface, surface.width / 2, surface.height / 2, 0xffffff);
             graphics_ready = 1;
             serial_write("graphics: BRX framebuffer interface initialized\n");
@@ -171,6 +175,7 @@ void kmain(void) {
     brx_module_register(&modules, (brx_module_t){ "core.processes", "current", "process table and user stack model", 1, 256, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.graphical-interface", "current", "framebuffer compositor and BRX desktop surface", 1, 1024, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.window-manager", "current", "window state, focus, hit-test and drag backend", 1, 2048, BRX_MODULE_READY });
+    brx_module_register(&modules, (brx_module_t){ "core.terminal", "current", "keyboard input, command buffer and native commands", 1, 4096, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.interrupts", "current", "IDT PIC PIT", 1, 2, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "core.application-loader", "current", "automatic format detection and internal dispatch", 1, 32, BRX_MODULE_READY });
     brx_module_register(&modules, (brx_module_t){ "compat.posix", "planned", "POSIX service layer", 1, 4, BRX_MODULE_PLANNED });
@@ -222,7 +227,19 @@ void kmain(void) {
             brx_window_handle_mouse(&window_manager, (brx_mouse_event_t){ (uint64_t)cursor_x, (uint64_t)cursor_y, (uint8_t)(brx_ps2_mouse_buttons() & 1), (uint8_t)(brx_ps2_mouse_buttons() & 2), (uint8_t)(brx_ps2_mouse_buttons() & 4) });
             brx_ui_desktop(&surface);
             brx_ui_render_windows(&surface, &window_manager);
+            brx_ui_render_terminal(&surface, brx_window_at(&window_manager, 200, 150), &terminal);
             brx_ui_cursor(&surface, cursor_x, cursor_y, brx_ps2_mouse_buttons() ? 0xf6c453 : 0xffffff);
+        }
+        if (graphics_ready) {
+            brx_ps2_poll();
+            int key;
+            while ((key = brx_ps2_read_key()) >= 0) {
+                brx_terminal_handle_key(&terminal, (char)key);
+                brx_ui_desktop(&surface);
+                brx_ui_render_windows(&surface, &window_manager);
+                brx_ui_render_terminal(&surface, brx_window_at(&window_manager, 200, 150), &terminal);
+                brx_ui_cursor(&surface, cursor_x, cursor_y, brx_ps2_mouse_buttons() ? 0xf6c453 : 0xffffff);
+            }
         }
         if (now >= last_report + 100) {
             last_report = now;

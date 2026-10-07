@@ -122,9 +122,19 @@ void brx_ui_render_windows(brx_ui_surface_t *surface, const brx_window_manager_t
         brx_ui_rect(surface, x + 2, y + 2, width - 4, 30, 0x263754);
         brx_ui_text(surface, x + 14, y + 10, window->title, 0xf2f6ff, 2);
         brx_ui_rect(surface, x + width - 28, y + 10, 12, 12, 0xf06c75);
-        brx_ui_text(surface, x + 20, y + 62, "KERNEL STATUS", 0x68d391, 2);
-        brx_ui_text(surface, x + 20, y + 98, "FRAMEBUFFER ONLINE", 0xf2f6ff, 1);
-        brx_ui_text(surface, x + 20, y + 122, "MOUSE INPUT ENABLED", 0xf2f6ff, 1);
-        brx_ui_text(surface, x + 20, y + 146, "NO USER APPLICATION", 0xf6c453, 1);
     }
+}
+
+void brx_ui_render_terminal(brx_ui_surface_t *surface, const brx_window_t *window, const brx_terminal_t *terminal) {
+    if (!surface || !surface->ready || !window || !terminal || window->state != BRX_WINDOW_OPEN) return;
+    uint64_t x = window->rect.x + 12;
+    uint64_t y = window->rect.y + 48;
+    brx_ui_rect(surface, x, y, window->rect.width - 24, window->rect.height - 60, 0x080d16);
+    uint64_t lines = brx_terminal_line_count(terminal);
+    uint64_t first = lines > 7 ? lines - 7 : 0;
+    uint64_t row = 0;
+    for (uint64_t i = first; i < lines; ++i) brx_ui_text(surface, x + 12, y + 12 + row++ * 22, brx_terminal_line(terminal, i), 0xb9c8df, 1);
+    brx_ui_text(surface, x + 12, y + 12 + row * 22, "BRX> ", 0x68d391, 1);
+    brx_ui_text(surface, x + 54, y + 12 + row * 22, brx_terminal_input(terminal), 0xf2f6ff, 1);
+    brx_ui_rect(surface, x + 54 + brx_terminal_input_length(terminal) * 7, y + 10 + row * 22, 6, 14, 0xf2f6ff);
 }
